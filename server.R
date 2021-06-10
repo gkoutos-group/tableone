@@ -96,6 +96,7 @@ server <- function(input, output, session) {
       
       df <- load_dataset()
       
+      positives <- tolower(unlist(strsplit(input$positive_values, ',')))
       return(get_valid_columns(ops[sapply(ops, function(x) { (sum(tolower(as.character(df[[x]])) %in% positives) > 0)})]))
     } else {
       return(get_valid_columns(unique(dtypes[dtypes$countable == input$count_group, ]$column)))
