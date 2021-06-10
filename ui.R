@@ -113,6 +113,6 @@ References:<br/>
   ),
   hr(),
   HTML(
-    '<b>Disclaimer: This is a prototype tool to support research. Validate your findings. </b><br/>This code is private (local access on <a href="https://github.com/gkoutos-group/tableone/">https://github.com/gkoutos-group/tableon/</a>. For details contact <a href="mailto:V.RothCardoso@bham.ac.uk">V.RothCardoso@bham.ac.uk</a>.'
+    '<b>Disclaimer: This is a prototype tool to support research. Validate your findings. </b><br/>This code is private (local access on <a href="https://github.com/gkoutos-group/tableone/">https://github.com/gkoutos-group/tableone/</a>. For details contact <a href="mailto:V.RothCardoso@bham.ac.uk">V.RothCardoso@bham.ac.uk</a>.'
   )
 )

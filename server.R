@@ -233,12 +233,12 @@ server <- function(input, output, session) {
     return(paste(format(Sys.time(), "%Y%m%d"), dfn, dfd, VERSION, sep="_"))
   })
   
-  output$download_table_columns_description <- downloadHandler(
+  output$download_table_column_description <- downloadHandler(
     filename = function() {
       paste0(base_download_name(), "_datatypes.csv")
     },
     content = function(file) {
-      write.csv(process_dtypes(), tempfile(pattern = "file", tmpdir = tempdir(), fileext = ".csv"), row.names = FALSE)
+      write.csv(process_dtypes(), file, row.names = FALSE)
     },
     contentType = "text/csv"
   )
@@ -256,7 +256,7 @@ server <- function(input, output, session) {
                                              shapiro_threshold=input$shapiro_threshold,
                                              classvar=classvar)
       
-      write.csv(result_cont, tempfile(pattern = "file", tmpdir = tempdir(), fileext = ".csv"), row.names = FALSE)
+      write.csv(result_cont, file, row.names = FALSE)
     },
     contentType = "text/csv"
   )
@@ -275,12 +275,12 @@ server <- function(input, output, session) {
                                      classvar=classvar,
                                      verbose=F)
       
-      write.csv(result_cat, tempfile(pattern = "file", tmpdir = tempdir(), fileext = ".csv"), row.names = FALSE)
+      write.csv(result_cat, file, row.names = FALSE)
     },
     contentType = "text/csv"
   )
   
-  output$download_table_countable <- downloadHandler(
+  output$download_table_counted <- downloadHandler(
     filename = function() {
       paste0(base_download_name(), "_counts.csv")
     },
@@ -296,7 +296,7 @@ server <- function(input, output, session) {
                                       shapiro_threshold=input$shapiro_threshold,
                                       classvar=classvar)
       
-      write.csv(result_comorb, tempfile(pattern = "file", tmpdir = tempdir(), fileext = ".csv"), row.names = FALSE)
+      write.csv(result_comorb, file, row.names = FALSE)
     },
     contentType = "text/csv"
   )
