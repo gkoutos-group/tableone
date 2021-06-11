@@ -6,6 +6,8 @@ VERSION = "tableOne_0.1"
 
 if(!exists(".describe_table_loaded", mode='function')) source(here::here('describe_table.R'))
 
+if(!exists(".models_loaded", mode='function')) source(here::here('models.R'))
+
 server <- function(input, output, session) {
   load_dataset <- reactive({
     if (is.null(input$dataset$datapath)) {
@@ -166,6 +168,7 @@ server <- function(input, output, session) {
     }
   })
   
+  ######################################## main figures and tables
   # info/text
   output$dataset_info <- renderText({
     loaded_file_output()
@@ -307,8 +310,11 @@ server <- function(input, output, session) {
     contentType = "text/csv"
   )
 
+  ########################################
   output$df_summary <- renderUI({
-    view(dfSummary(process_df()), method='render')
+    data <- process_df()
+    dtypes <- process_dtypes()
+    summarytools::view(dfSummary(data[, setdiff(colnames(data), c('.all_samples', unique(dtypes[dtypes$type == 'skip', ]$column)))]), method='render')
   })
   
   output$download_summary <- downloadHandler(
@@ -316,8 +322,94 @@ server <- function(input, output, session) {
       paste0(base_download_name(), "_df_summary.html")
     },
     content = function(file) {
-      view(dfSummary(process_df()), method='viewer', file=file)
+      data <- process_df()
+      dtypes <- process_dtypes()
+      view(dfSummary(data[, setdiff(colnames(data), c('.all_samples', unique(dtypes[dtypes$type == 'skip', ]$column)))]), method='viewer', file=file)
     },
     contentType = "text/html"
   )
+  ########################################
+  .tunivariate <- reactive({
+    if(input$univariate_variables == '') {
+      dtypes <- process_dtypes()
+      pselect <- unique(dtypes[dtypes$type != 'skip', ]$column)
+      vars <- setdiff(pselect, c('.all_samples', input$univariate_output, '', NULL))
+    } else {
+      vars <- unlist(strsplit(input$univariate_variables, ','))
+    }
+    univariate_table(process_df(), input$univariate_output, variables=vars, weighted=input$univariate_weight, positive_class=levels(process_df()[[input$univariate_output]])[1])
+  })
+  
+  output$univariate_positive_class <- renderPrint({
+    cat(levels(process_df()[[input$univariate_output]])[1])
+  })
+  
+  output$univariate_table <- renderTable({
+    .tunivariate()
+  }, digits=3)
+  
+  output$download_univariate_table <- downloadHandler(
+    filename = function() {
+      paste0(base_download_name(), "_univariate.csv")
+    },
+    content = function(file) {
+      write.csv(.tunivariate(), file, row.names = FALSE)
+    },
+    contentType = "text/csv"
+  )
+  
+  
+  ########################################
+  .multivariate_model <- reactive({
+    if(input$multivariate_variables == '') {
+      dtypes <- process_dtypes()
+      pselect <- unique(dtypes[dtypes$type != 'skip', ]$column)
+      vars <- setdiff(pselect, c('.all_samples', input$multivariate_output, '', NULL))
+    } else {
+      vars <- unlist(strsplit(input$multivariate_variables, ','))
+    }
+    multivariate_model(process_df(), outcome=input$multivariate_output, variables=vars, weighted=input$univariate_weight, positive_class=levels(process_df()[[input$multivariate_output]])[1])
+  })
+  
+  .tmultivariate <- reactive({
+    table_multivariate_model(.multivariate_model())
+  })
+  
+  output$multivariate_positive_class <- renderPrint({
+    cat(levels(process_df()[[input$multivariate_output]])[1])
+  })
+  
+  output$multivariate_table <- renderTable({
+    .tmultivariate()
+  }, digits=3)
+  
+  output$multivariate_figure <- renderPlot({
+    plot_multivariate_odds(.multivariate_model(), show.values=input$multivarite_show_or)
+  })
+  
+  output$multivariate_text_output <- renderPrint({
+    summary(.multivariate_model())
+  })
+
+  output$download_multivariate_table <- downloadHandler(
+    filename = function() {
+      paste0(base_download_name(), "_multivariate.csv")
+    },
+    content = function(file) {
+      write.csv(.tmultivariate(), file, row.names = FALSE)
+    },
+    contentType = "text/csv"
+  )
+  
+  output$download_multivariate_figure <- downloadHandler(
+    filename = function() {
+      paste0(base_download_name(), "_multivariate_figure.png")
+    },
+    content = function(file) {
+      device <- function(..., width, height) {
+        grDevices::png(..., width = width, height = height,
+                       res = 300, units = "in")
+      }
+      ggsave(file, plot = plot_multivariate_odds(.multivariate_model(), show.values=input$multivarite_show_or), device = device)
+    })
 }

@@ -51,11 +51,11 @@ ui <- fluidPage(
                style = "color:red"),
           
           textInput("count_group", label = "Count positive column elements based:", value=""),
-          textInput("count_group_breaks", label = "Number of breaks", value="1,2,3"),
+          textInput("count_group_breaks", label = "Number of breaks (comma-separated `,`)", value="1,2,3"),
           span(textOutput("count_group_red"),
                style = "color:red"),
           
-          textInput("positive_values", label = "What values indicate positives on binary data? (comma `,` separated)", value="1,yes"),
+          textInput("positive_values", label = "What values indicate positives on binary data? (comma-separated `,`)", value="1,yes"),
           
           hr(),
           helpText("Advanced options"),
@@ -120,6 +120,47 @@ ui <- fluidPage(
     tabPanel("Dataset summary",
              htmlOutput("df_summary"),
              downloadButton("download_summary", "Download")),
+    tabPanel("Univariate analysis",
+             sidebarLayout(
+               sidebarPanel(
+                 helpText("Model information:"),
+                 textInput("univariate_output", label="What is the output column?", value="group"),
+                 textInput("univariate_variables", label = "What variables should be modelled? (comma-separated `,`; empty for all)", value="age,sex"),
+                 hr(),
+                 helpText("This tries countering class unbalance:"),
+                 checkboxInput("univariate_weight", "Class weighting?", value = TRUE),
+               ),
+               mainPanel(
+                 helpText("Positive class considered:"),
+                 verbatimTextOutput("univariate_positive_class"),
+                 tableOutput("univariate_table"),
+                 downloadButton("download_univariate_table", "Download"),
+               )
+             )
+    ),
+    tabPanel("Multivariate analysis",
+             sidebarLayout(
+               sidebarPanel(
+                 helpText("Model information:"),
+                 textInput("multivariate_output", label="What is the output column?", value="group"),
+                 textInput("multivariate_variables", label = "What variables should be in the model? (comma-separated `,`; empty for all)", value="age,sex"),
+                 hr(),
+                 helpText("This tries countering class unbalance:"),
+                 checkboxInput("multivariate_weight", "Class weighting?", value = TRUE),
+                 hr(),
+                 checkboxInput("multivarite_show_or", "Show OR on figure", value=FALSE)
+               ),
+               mainPanel(
+                 helpText("Positive class considered:"),
+                 verbatimTextOutput("multivariate_positive_class"),
+                 tableOutput("multivariate_table"),
+                 downloadButton("download_multivariate_table", "Download"),
+                 plotOutput("multivariate_figure"),
+                 downloadButton("download_multivariate_figure", "Download"),
+                 verbatimTextOutput("multivariate_text_output")
+               )
+             )
+    ),
     tabPanel("Help",
              HTML("Numerical variables:<br/>
 If the number of elements is equal or above 5000 the normality test performed is Anderson-Darling test. In other cases the test performed is Shapiro-Wilk.<br/>
@@ -138,13 +179,24 @@ If there are more than 2x2 options, the p-value is simulated through Monte Carlo
 Count tables:<br/>
 These are generated counting the number of samples that had more than each possibility specified.<br/>
 <br/><br/>
+Models:<br/>
+Univariate uses a single variable at a time (\"uncorrected\").<br/>
+Multivariate model uses all variables together (\"adjusted model\").<br/>
+This is a generalised linear model, using a quasi-binomial function with logit link. [5]<br/>
+The weighting, if selected weights the samples using a weight for each sample: <br/>
+weights <- 1 + (as.numeric(as.character(df[[outcome]])) * (as.numeric(nrow(df) / table(df[[outcome]])['1'] - 1)))<br/><br/>
+The confidence interval reported is the 95% CI.<br/>
+If the model is not shown for univariate variables; or nothing on multivariate analysis, it means that there is something wrong with the variables; it could be that it is fully correlated with the outcomes.<br/>
+<br/><br/>
 References:<br/>
 [1] Myles Hollander and Douglas A. Wolfe (1973), Nonparametric Statistical Methods. New York: John Wiley & Sons. Pages 115-120.<br/>
 [2] Chambers, J. M., Freeny, A and Heiberger, R. M. (1992) Analysis of variance; designed experiments. Chapter 5 of Statistical Models in S eds J. M. Chambers and T. J. Hastie, Wadsworth & Brooks/Cole.<br/>
 [3] Fisher, R. A. (1970). Statistical Methods for Research Workers. Oliver & Boyd.
 [4] Clarkson, D. B., Fan, Y. and Joe, H. (1993) A Remark on Algorithm 643: FEXACT: An Algorithm for Performing Fisher's Exact Test in r x c Contingency Tables. ACM Transactions on Mathematical Software, 19, 484-488. doi: 10.1145/168173.168412.
+[5] Venables, W. N. and Ripley, B. D. (2002) Modern Applied Statistics with S. New York: Springer.
+
 "))
   ),
             hr(),
-            HTML('<b>Disclaimer: This is a prototype tool to support research. Validate your findings. </b><br/>This code is private (local access on <a href="https://github.com/gkoutos-group/tableone/">https://github.com/gkoutos-group/tableone/</a>. For details contact <a href="mailto:V.RothCardoso@bham.ac.uk">V.RothCardoso@bham.ac.uk</a>.')
+            HTML('<b>Disclaimer: This is a prototype tool to support research. Validate your findings. </b><br/>This code is private on <a href="https://github.com/gkoutos-group/tableone/">https://github.com/gkoutos-group/tableone/</a>. For details contact <a href="mailto:V.RothCardoso@bham.ac.uk">V.RothCardoso@bham.ac.uk</a>.')
 )
