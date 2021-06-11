@@ -1,5 +1,6 @@
 library(shiny)
 library(readxl)
+library(summarytools)
 
 VERSION = "tableOne_0.1"
 
@@ -306,4 +307,17 @@ server <- function(input, output, session) {
     contentType = "text/csv"
   )
 
+  output$df_summary <- renderUI({
+    view(dfSummary(process_df()), method='render')
+  })
+  
+  output$download_summary <- downloadHandler(
+    filename = function() {
+      paste0(base_download_name(), "_df_summary.html")
+    },
+    content = function(file) {
+      view(dfSummary(process_df()), method='viewer', file=file)
+    },
+    contentType = "text/html"
+  )
 }

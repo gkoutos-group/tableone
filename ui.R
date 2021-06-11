@@ -117,6 +117,9 @@ ui <- fluidPage(
         )
       )
     ),
+    tabPanel("Dataset summary",
+             htmlOutput("df_summary"),
+             downloadButton("download_summary", "Download")),
     tabPanel("Help",
              HTML("Numerical variables:<br/>
 If the number of elements is equal or above 5000 the normality test performed is Anderson-Darling test. In other cases the test performed is Shapiro-Wilk.<br/>
