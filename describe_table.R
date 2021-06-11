@@ -200,9 +200,6 @@ table_continuous_pval <- function(df, columns_to_test, classvar='predclass', ver
         print(summary(test))
       }
     }
-    
-    print(test_pval)
-    
     pval <- append(pval, round(test_pval, digits=round_digits))
     condition <- append(condition, i)
     miss <- append(miss, sum(is.na(df[[i]])))
