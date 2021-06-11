@@ -10,7 +10,7 @@ library(nortest)
   return(TRUE)
 }
 
-## infer column type
+## infer column type - check matchmatch to be sure using the same version
 infer_column_type <- function(df, c, ratio_factor, ratio_numeric) {
   n_op <- length(unique(df[[c]]))
   
@@ -26,10 +26,8 @@ infer_column_type <- function(df, c, ratio_factor, ratio_numeric) {
     return("numeric")
   }
   return("skip")
-  
 }
 
-#####################
 # check for missing columns
 check_columns_dataset <- function(df, columns_to_test) {
   invalids <- vector()
