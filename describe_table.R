@@ -45,7 +45,7 @@ check_columns_dataset <- function(df, columns_to_test) {
 
 #####################
 # auxiliary table with fisher test on the categorical variables
-table_cat_pval <- function(df, columns_to_test, classvar='predclass', verbose=FALSE) {
+table_cat_pval <- function(df, columns_to_test, classvar='predclass', verbose=FALSE, round_digits=2) {
   check_columns_dataset(df, c(columns_to_test, classvar))
   
   condition <- vector()
@@ -68,7 +68,7 @@ table_cat_pval <- function(df, columns_to_test, classvar='predclass', verbose=FA
       chi <- list("p.value" = 1)
     }
     condition <- append(condition, i)
-    pval <- append(pval, chi$p.value)
+    pval <- append(pval, round(chi$p.value, digits=round_digits))
     miss <- append(miss, sum(is.na(df[[i]])))
     if(verbose) {
       print(chi)
@@ -80,7 +80,7 @@ table_cat_pval <- function(df, columns_to_test, classvar='predclass', verbose=FA
 
 #####################
 # table with the distribution of values N of cases and % for categorical variables
-table_cat_values <- function(df, columns_to_test, positive_class="1", classvar='predclass', verbose=FALSE) {
+table_cat_values <- function(df, columns_to_test, positive_class="1", classvar='predclass', verbose=FALSE, round_digits=0) {
   check_columns_dataset(df, c(columns_to_test, classvar))
   
   # prepare a df with these columns
@@ -118,7 +118,7 @@ table_cat_values <- function(df, columns_to_test, positive_class="1", classvar='
         n_patients <- append(n_patients, n)
         # calculate the percentage of patients in both the cluster and with the condition
         percent_patients <- append(percent_patients, 
-                                   round(100 * nrow(df[(df[[classvar]] == c) & (df[[i]] == v) & (!is.na(df[[i]])), ])/nrow(df[df[[classvar]] == c, ])))
+                                   round(100 * nrow(df[(df[[classvar]] == c) & (df[[i]] == v) & (!is.na(df[[i]])), ])/nrow(df[df[[classvar]] == c, ]), digits=round_digits))
       }
     }
   }
@@ -161,14 +161,14 @@ table_cat_values <- function(df, columns_to_test, positive_class="1", classvar='
   #print(head(cat_df))
   cat_df %>% pivot_wider(names_from = class, values_from = info) -> cat_df
   #print(head(cat_df))
-  pval_df <- table_cat_pval(df, columns_to_test, classvar=classvar, verbose=verbose)
+  pval_df <- table_cat_pval(df, columns_to_test, classvar=classvar, verbose=verbose, round_digits=round_digits)
   
   return(merge(cat_df, pval_df, on='condition', all.x=T))
 }
 
 #####################
 # auxiliary table with one-way anova test on continuous variables
-table_continuous_pval <- function(df, columns_to_test, classvar='predclass', verbose=FALSE) {
+table_continuous_pval <- function(df, columns_to_test, classvar='predclass', verbose=FALSE, round_digits=2) {
   check_columns_dataset(df, c(columns_to_test, classvar))
   
   condition <- vector()
@@ -189,28 +189,31 @@ table_continuous_pval <- function(df, columns_to_test, classvar='predclass', ver
     
     if(pval1 < 0.05) {
       test <- kruskal.test(as.formula(paste0(i, ' ~ ', classvar)), data = df[is.finite(df[[i]]), ])
-      pval <- append(pval, test$p.value[1])
+      test_pval <- test$p.value[1]
       if(verbose) {
         print(test)
       }
     } else {
       test <- aov(as.formula(paste0(i, ' ~ ', classvar)), data = df[is.finite(df[[i]]), ])
-      pval <- append(pval, summary(test)[[1]]['Pr(>F)'][[1]][1])
+      test_pval <- summary(test)[[1]]['Pr(>F)'][[1]][1]
       if(verbose) {
         print(summary(test))
       }
     }
     
+    print(test_pval)
+    
+    pval <- append(pval, round(test_pval, digits=round_digits))
     condition <- append(condition, i)
     miss <- append(miss, sum(is.na(df[[i]])))
   }
-  pval_df <- data.frame(condition, miss, pval_anova=pval)
+  pval_df <- data.frame(condition, miss, pval=pval)
   return(pval_df)
 }
 
 #####################
 # table with the distribution of values mean (sd) or median (iqr) depending on shapiro-wilk or anderson-darling (if >= 5000 samples)
-table_continuous_values <- function(df, columns_to_test, shapiro_threshold=0.05, classvar='predclass', verbose=FALSE) {
+table_continuous_values <- function(df, columns_to_test, shapiro_threshold=0.05, classvar='predclass', verbose=FALSE, round_digits=2) {
   check_columns_dataset(df, c(columns_to_test, classvar))
   c_to_test <- columns_to_test
   if(is.null(c_to_test) | (length(c_to_test) == 0)) {
@@ -239,7 +242,7 @@ table_continuous_values <- function(df, columns_to_test, shapiro_threshold=0.05,
       norm_t <- 'Shapiro-Wilk'
     }
     normality_condition <- append(normality_condition, i)
-    normality_pval <- append(normality_pval, shap_test_pval)
+    normality_pval <- append(normality_pval, round(shap_test_pval, digits=round_digits))
     normality_test <- append(normality_test, norm_t)
     if(verbose) {
       print(paste(i, shap_test_pval))
@@ -249,14 +252,13 @@ table_continuous_values <- function(df, columns_to_test, shapiro_threshold=0.05,
         condition <- append(condition, i)
         class <- append(class, c)
         if(shap_test_pval < shapiro_threshold) {
-          main <- append(main, median(df[(df[[classvar]] == c),][[i]], na.rm=T))
+          main <- append(main, round(median(df[(df[[classvar]] == c),][[i]], na.rm=T), digits=round_digits))
           
           quart <- quantile(df[(df[[classvar]] == c),][[i]], probs=c(0.25, 0.75), type=8, na.rm=T)
-          secondary <- append(secondary, sprintf("%0.2f-%0.2f", quart[1], quart[2]))
-          #secondary <- append(secondary, IQR(df[(df[[classvar]] == c),][[i]], na.rm=T, type=8)) #calculated with the median: quantile estimates are approximately median-unbiased regardless of the distribution 
+          secondary <- append(secondary, paste0(round(quart[1], digits=round_digits), '-', round(quart[2], digits=round_digits)))
         } else {
           main <- append(main, mean(df[(df[[classvar]] == c),][[i]], na.rm=T))
-          secondary <- append(secondary, round(sd(df[(df[[classvar]] == c),][[i]], na.rm=T), digits=2))
+          secondary <- append(secondary, round(sd(df[(df[[classvar]] == c),][[i]], na.rm=T), digits=round_digits))
         }
       }
     }
@@ -290,7 +292,7 @@ table_continuous_values <- function(df, columns_to_test, shapiro_threshold=0.05,
   #head(cat_df)
   
   cat_df <- cast(cat_df, condition ~ class, value='info')
-  pval_df <- table_continuous_pval(df, columns_to_test, classvar=classvar)
+  pval_df <- table_continuous_pval(df, columns_to_test, classvar=classvar, round_digits=round_digits)
   
   norm_df <- data.frame(condition=normality_condition, normality_test, normality_pval)
   
@@ -299,7 +301,7 @@ table_continuous_values <- function(df, columns_to_test, shapiro_threshold=0.05,
 
 #####################
 # table comorbidities
-table_n_comorb <- function(df, comorbidities, subgroup_cases=c(1), cname='comorbidities', cvalue="1", shapiro_threshold=0.05, classvar='predclass', verbose=FALSE) {
+table_n_comorb <- function(df, comorbidities, subgroup_cases=c(1), cname='comorbidities', cvalue="1", shapiro_threshold=0.05, classvar='predclass', verbose=FALSE, round_digits=2) {
   check_columns_dataset(df, c(comorbidities, classvar))
   for(c in comorbidities) {
     if(length(intersect(c(cvalue), levels(df[[c]]))) == 0) {
@@ -335,13 +337,13 @@ table_n_comorb <- function(df, comorbidities, subgroup_cases=c(1), cname='comorb
     class <- append(class, i)
     condition <- append(condition, ifelse(shap_test_pval < shapiro_threshold, 'median (iqr)', 'mean (sd)'))
     total_patients <- append(total_patients, nrow(df[df[[classvar]] == i, ]))
-    subgroups <- append(subgroups, paste(norm_t, shap_test_pval))
+    subgroups <- append(subgroups, paste(norm_t, round(shap_test_pval, digits=round_digits)))
     if(shap_test_pval < shapiro_threshold) {
       main <- append(main, median(df[(df[[classvar]] == i),]$comorb_per_patient, na.rm=T))
-      secondary <- append(secondary, IQR(df[(df[[classvar]] == i),]$comorb_per_patient, na.rm=T, type=8)) #calculated with the median: quantile estimates are approximately median-unbiased regardless of the distribution 
+      secondary <- append(secondary, round(IQR(df[(df[[classvar]] == i),]$comorb_per_patient, na.rm=T, type=8), digits=round_digits)) #calculated with the median: quantile estimates are approximately median-unbiased regardless of the distribution 
     } else {
       main <- append(main, mean(df[(df[[classvar]] == i),]$comorb_per_patient, na.rm=T))
-      secondary <- append(secondary, sd(df[(df[[classvar]] == i),]$comorb_per_patient, na.rm=T, type=8))
+      secondary <- append(secondary, round(sd(df[(df[[classvar]] == i),]$comorb_per_patient, na.rm=T, type=8), digits=round_digits))
     }
     
     for(s in subgroup_cases) {
@@ -351,7 +353,7 @@ table_n_comorb <- function(df, comorbidities, subgroup_cases=c(1), cname='comorb
       subgroups <- append(subgroups, s)
       main <- append(main, sum(rowSums(df[df[[classvar]] == i, comorbidities] == cvalue, na.rm=T) >= s))
       secondary <- append(secondary, 
-                          round(100 * sum(rowSums(df[df[[classvar]] == i, comorbidities] == cvalue, na.rm=T) >= s) / nrow(df[df[[classvar]] == i, ])))
+                          round(100 * sum(rowSums(df[df[[classvar]] == i, comorbidities] == cvalue, na.rm=T) >= s) / nrow(df[df[[classvar]] == i, ]), digits=round_digits))
     }
   }
   cat_df <- data.frame(class, condition, total_patients, subgroups, main, secondary)

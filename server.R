@@ -150,6 +150,21 @@ server <- function(input, output, session) {
     }
   })
   
+  output$digits_red <- renderText({
+    .check_digits <- function(x) {
+      if(round(x, digits=0) != x) {
+        return(FALSE)
+      }
+      return(TRUE)
+    }
+    
+    for(i in c(input$digits_categorical, input$digits_numerical, input$digits_counts)) {
+      if(.check_digits(i) == FALSE) {
+        return("Number of digits must be an integer number.")
+      }
+    }
+  })
+  
   # info/text
   output$dataset_info <- renderText({
     loaded_file_output()
@@ -181,42 +196,57 @@ server <- function(input, output, session) {
     process_dtypes()
   }, rownames = FALSE)
   
-  output$table_numerical <- renderTable({
+  
+  .tnumerical <- reactive({
     df <- process_df()
     
     classvar <- ifelse(!(input$group_samples %in% colnames(process_df())), ".all_samples", input$group_samples)
-    result_cont <- table_continuous_values(df, 
-                                           gimme_numerical(),
-                                           shapiro_threshold=input$shapiro_threshold,
-                                           classvar=classvar)
-    return(result_cont)
-  }, rownames = FALSE)
+    table_continuous_values(df, 
+                            gimme_numerical(),
+                            shapiro_threshold=input$shapiro_threshold,
+                            classvar=classvar,
+                            round_digits=input$digits_numerical)
+  })
+  
+  .tcategorical <- reactive({
+    df <- process_df()
+    
+    classvar <- ifelse(!(input$group_samples %in% colnames(process_df())), ".all_samples", input$group_samples)
+    table_cat_values(df, 
+                     gimme_categorical(),
+                     positive_class="1",
+                     classvar=classvar,
+                     verbose=F,
+                     round_digits=input$digits_categorical)
+  })
+  
+  .tcountable <- reactive({
+    df <- process_df()
+    
+    classvar <- ifelse(!(input$group_samples %in% colnames(process_df())), ".all_samples", input$group_samples)
+    table_n_comorb(df, 
+                   gimme_count_var(),
+                   subgroup_cases=as.numeric(unlist(strsplit(input$count_group_breaks, ','))),
+                   cname=ifelse(is.null(input$count_group) | (input$count_group == ""), "binary variables", input$count_group),
+                   cvalue="1",
+                   shapiro_threshold=input$shapiro_threshold,
+                   classvar=classvar,
+                   round_digits=input$digits_counts)
+  })
+  
+  output$table_numerical <- renderTable({
+    .tnumerical()
+  }, digits=3, rownames = FALSE)
+  
   
   output$table_categorical <- renderTable({
-    df <- process_df()
-    
-    classvar <- ifelse(!(input$group_samples %in% colnames(process_df())), ".all_samples", input$group_samples)
-    result_cat <- table_cat_values(df, 
-                                   gimme_categorical(),
-                                   positive_class="1",
-                                   classvar=classvar,
-                                   verbose=F)
-    return(result_cat)
-  }, rownames = FALSE)
+    .tcategorical()
+  }, digits=3, rownames = FALSE)
   
   
   output$table_countable <- renderTable({
-    df <- process_df()
-    
-    classvar <- ifelse(!(input$group_samples %in% colnames(process_df())), ".all_samples", input$group_samples)
-    result_comorb <- table_n_comorb(df, 
-                                    gimme_count_var(),
-                                    subgroup_cases=as.numeric(unlist(strsplit(input$count_group_breaks, ','))),
-                                    cname=ifelse(is.null(input$count_group) | (input$count_group == ""), "binary variables", input$count_group),
-                                    cvalue="1",
-                                    shapiro_threshold=input$shapiro_threshold,
-                                    classvar=classvar)
-  })
+    .tcountable()
+  }, digits=3)
   
   # based download name
   base_download_name <- reactive({
@@ -248,14 +278,7 @@ server <- function(input, output, session) {
       paste0(base_download_name(), "_numerical.csv")
     },
     content = function(file) {
-      df <- process_df()
-      
-      classvar <- ifelse(!(input$group_samples %in% colnames(process_df())), ".all_samples", input$group_samples)
-      result_cont <- table_continuous_values(df, 
-                                             gimme_numerical(),
-                                             shapiro_threshold=input$shapiro_threshold,
-                                             classvar=classvar)
-      
+      result_cont <- .tnumerical()
       write.csv(result_cont, file, row.names = FALSE)
     },
     contentType = "text/csv"
@@ -266,15 +289,7 @@ server <- function(input, output, session) {
       paste0(base_download_name(), "categorical.csv")
     },
     content = function(file) {
-      df <- process_df()
-      
-      classvar <- ifelse(!(input$group_samples %in% colnames(process_df())), ".all_samples", input$group_samples)
-      result_cat <- table_cat_values(df, 
-                                     gimme_categorical(),
-                                     positive_class=1,
-                                     classvar=classvar,
-                                     verbose=F)
-      
+      result_cat <- .tcategorical()
       write.csv(result_cat, file, row.names = FALSE)
     },
     contentType = "text/csv"
@@ -285,17 +300,7 @@ server <- function(input, output, session) {
       paste0(base_download_name(), "_counts.csv")
     },
     content = function(file) {
-      df <- process_df()
-      
-      classvar <- ifelse(!(input$group_samples %in% colnames(process_df())), ".all_samples", input$group_samples)
-      result_comorb <- table_n_comorb(df, 
-                                      gimme_count_var(),
-                                      subgroup_cases=as.numeric(unlist(strsplit(input$count_group_breaks, ','))),
-                                      cname=ifelse(is.null(input$count_group) | (input$count_group == ""), "binary variables", input$count_group),
-                                      cvalue=1,
-                                      shapiro_threshold=input$shapiro_threshold,
-                                      classvar=classvar)
-      
+      result_comorb <- .tcounts()
       write.csv(result_comorb, file, row.names = FALSE)
     },
     contentType = "text/csv"
