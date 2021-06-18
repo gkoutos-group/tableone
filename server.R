@@ -347,7 +347,12 @@ server <- function(input, output, session) {
   })
   
   output$univariate_positive_class <- renderPrint({
-    cat(levels(process_df()[[input$univariate_output]])[1])
+    if(is.null(input$univariate_output_class)) {
+      positive_class <- levels(process_df()[[input$univariate_output]])[1]
+    } else {
+      positive_class <- input$univariate_output_class
+    }
+    cat(positive_class)
   })
   
   output$univariate_table <- renderTable({
@@ -387,7 +392,12 @@ server <- function(input, output, session) {
   })
   
   output$multivariate_positive_class <- renderPrint({
-    cat(levels(process_df()[[input$multivariate_output]])[1])
+    if(is.null(input$multivariate_output_class)) {
+      positive_class <- levels(process_df()[[input$multivariate_output]])[1]
+    } else {
+      positive_class <- input$multivariate_output_class
+    }
+    cat(positive_class)
   })
   
   output$multivariate_table <- renderTable({
