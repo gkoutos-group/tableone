@@ -186,10 +186,17 @@ table_continuous_pval <- function(df, columns_to_test, classvar='predclass', ver
     }
     
     if(pval1 < 0.05) {
-      test <- kruskal.test(as.formula(paste0(i, ' ~ ', classvar)), data = df[is.finite(df[[i]]), ])
-      test_pval <- test$p.value[1]
-      if(verbose) {
-        print(test)
+      tryCatch({
+        test <- kruskal.test(as.formula(paste0(i, ' ~ ', classvar)), data = df[is.finite(df[[i]]), ])
+        test_pval <- test$p.value[1]
+        if(verbose) {
+          print(test)
+        }
+      }, error=function(e) {
+        print(paste('Error on kruskal.test, probably only one a single class in comparison.', i, classvar))
+      })
+      if(!exists('test_pval')) {
+        test_pval <- NA
       }
     } else {
       test <- aov(as.formula(paste0(i, ' ~ ', classvar)), data = df[is.finite(df[[i]]), ])
