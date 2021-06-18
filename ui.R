@@ -129,6 +129,8 @@ ui <- fluidPage(
                  hr(),
                  helpText("This tries countering class unbalance:"),
                  checkboxInput("univariate_weight", "Class weighting?", value = TRUE),
+                 hr(),
+                 textInput("univariate_output_class", label="What is the positive output value?", value="1")
                ),
                mainPanel(
                  helpText("Positive class considered:"),
@@ -148,7 +150,9 @@ ui <- fluidPage(
                  helpText("This tries countering class unbalance:"),
                  checkboxInput("multivariate_weight", "Class weighting?", value = TRUE),
                  hr(),
-                 checkboxInput("multivarite_show_or", "Show OR on figure", value=FALSE)
+                 checkboxInput("multivarite_show_or", "Show OR on figure", value=FALSE),
+                 hr(),
+                 textInput("multivariate_output_class", label="What is the positive output value?", value="1")
                ),
                mainPanel(
                  helpText("Positive class considered:"),

@@ -338,7 +338,12 @@ server <- function(input, output, session) {
     } else {
       vars <- unlist(strsplit(input$univariate_variables, ','))
     }
-    univariate_table(process_df(), input$univariate_output, variables=vars, weighted=input$univariate_weight, positive_class=levels(process_df()[[input$univariate_output]])[1])
+    if(is.null(input$univariate_output_class)) {
+      positive_class <- levels(process_df()[[input$univariate_output]])[1]
+    } else {
+      positive_class <- input$univariate_output_class
+    }
+    univariate_table(process_df(), input$univariate_output, variables=vars, weighted=input$univariate_weight, positive_class=positive_class)
   })
   
   output$univariate_positive_class <- renderPrint({
@@ -369,7 +374,12 @@ server <- function(input, output, session) {
     } else {
       vars <- unlist(strsplit(input$multivariate_variables, ','))
     }
-    multivariate_model(process_df(), outcome=input$multivariate_output, variables=vars, weighted=input$univariate_weight, positive_class=levels(process_df()[[input$multivariate_output]])[1])
+    if(is.null(input$multivariate_output_class)) {
+      positive_class <- levels(process_df()[[input$multivariate_output]])[1]
+    } else {
+      positive_class <- input$multivariate_output_class
+    }
+    multivariate_model(process_df(), outcome=input$multivariate_output, variables=vars, weighted=input$univariate_weight, positive_class=positive_class)
   })
   
   .tmultivariate <- reactive({

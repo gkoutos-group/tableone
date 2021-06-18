@@ -44,6 +44,14 @@ table_multivariate_model <- function(m2_summary) {
   complete <- merge(base,
                     cis,
                     on='names')
+  
+  # for use in excel
+  complete$X_label_pos <- 0.6
+  complete$Y_pos <- nrow(complete):1
+  complete$low_diff <- complete$OR - complete$OR_low
+  complete$high_diff <- complete$OR_high - complete$OR
+  # for use in excel
+  
   first_cols <- c('names', 'coefficients')
   return(complete[, c(first_cols, setdiff(colnames(complete), first_cols))])
 }
