@@ -1,7 +1,7 @@
 library(shiny)
 library(readxl)
 library(summarytools)
-st_options(use.x11 = FALSE)
+st_options(use.x11 = TRUE)
 
 VERSION = "tableOne_0.1"
 
