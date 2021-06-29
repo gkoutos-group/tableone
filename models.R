@@ -6,7 +6,7 @@ library(ggplot2)
 
 theme_set(theme_sjplot())
 
-.models_loaded <- function()
+.models_loaded <- function() {}
 
 multivariate_model <- function(data, outcome, variables, weighted=FALSE, positive_class = '1') {
   data[[outcome]] <- as.factor(as.numeric(data[[outcome]] == positive_class))
