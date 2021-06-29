@@ -8,6 +8,9 @@ if(!exists(".describe_table_loaded", mode='function')) source(here::here('descri
 
 if(!exists(".models_loaded", mode='function')) source(here::here('models.R'))
 
+if(!exists("multivariate_model", mode='function')) source(here::here('models.R'))
+
+
 server <- function(input, output, session) {
   ######################################## this code is copied and pasted on the matchmatch project
   load_dataset <- reactive({
