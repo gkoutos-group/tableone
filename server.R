@@ -317,7 +317,10 @@ server <- function(input, output, session) {
   output$df_summary <- renderUI({
     data <- process_df()
     dtypes <- process_dtypes()
-    summarytools::view(dfSummary(data[, setdiff(colnames(data), c('.all_samples', unique(dtypes[dtypes$type == 'skip', ]$column)))]), method='render')
+    summarytools::view(dfSummary(data[, setdiff(colnames(data), c('.all_samples', unique(dtypes[dtypes$type == 'skip', ]$column)))]),
+                       method='render',
+                       style='rmarkdown',
+                       plain.ascii=T)
   })
   
   output$download_summary <- downloadHandler(
@@ -327,7 +330,10 @@ server <- function(input, output, session) {
     content = function(file) {
       data <- process_df()
       dtypes <- process_dtypes()
-      view(dfSummary(data[, setdiff(colnames(data), c('.all_samples', unique(dtypes[dtypes$type == 'skip', ]$column)))]), method='viewer', file=file)
+      view(dfSummary(data[, setdiff(colnames(data), c('.all_samples', unique(dtypes[dtypes$type == 'skip', ]$column)))]), 
+           method='viewer',
+           style='rmarkdown',
+           file=file)
     },
     contentType = "text/html"
   )
