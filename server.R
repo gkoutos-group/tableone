@@ -1,14 +1,13 @@
 library(shiny)
 library(readxl)
 library(summarytools)
+st_options(use.x11 = FALSE)
 
 VERSION = "tableOne_0.1"
 
 if(!exists(".describe_table_loaded", mode='function')) source(here::here('describe_table.R'))
 
 if(!exists(".models_loaded", mode='function')) source(here::here('models.R'))
-
-if(!exists("multivariate_model", mode='function')) source(here::here('models.R'))
 
 
 server <- function(input, output, session) {
