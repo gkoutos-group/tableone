@@ -43,7 +43,7 @@ check_columns_dataset <- function(df, columns_to_test) {
 
 #####################
 # auxiliary table with fisher test on the categorical variables
-table_cat_pval <- function(df, columns_to_test, classvar='predclass', verbose=FALSE, round_digits=2) {
+table_cat_pval <- function(df, columns_to_test, classvar='predclass', verbose=FALSE, round_digits=8) {
   check_columns_dataset(df, c(columns_to_test, classvar))
   
   condition <- vector()
@@ -78,7 +78,7 @@ table_cat_pval <- function(df, columns_to_test, classvar='predclass', verbose=FA
 
 #####################
 # table with the distribution of values N of cases and % for categorical variables
-table_cat_values <- function(df, columns_to_test, positive_class="1", classvar='predclass', verbose=FALSE, round_digits=0) {
+table_cat_values <- function(df, columns_to_test, positive_class="1", classvar='predclass', verbose=FALSE, round_digits=8) {
   check_columns_dataset(df, c(columns_to_test, classvar))
   
   # prepare a df with these columns
@@ -166,7 +166,7 @@ table_cat_values <- function(df, columns_to_test, positive_class="1", classvar='
 
 #####################
 # auxiliary table with one-way anova test on continuous variables
-table_continuous_pval <- function(df, columns_to_test, classvar='predclass', verbose=FALSE, round_digits=2) {
+table_continuous_pval <- function(df, columns_to_test, classvar='predclass', verbose=FALSE, round_digits=8) {
   check_columns_dataset(df, c(columns_to_test, classvar))
   
   condition <- vector()
@@ -215,7 +215,7 @@ table_continuous_pval <- function(df, columns_to_test, classvar='predclass', ver
 
 #####################
 # table with the distribution of values mean (sd) or median (iqr) depending on shapiro-wilk or anderson-darling (if >= 5000 samples)
-table_continuous_values <- function(df, columns_to_test, shapiro_threshold=0.05, classvar='predclass', verbose=FALSE, round_digits=2) {
+table_continuous_values <- function(df, columns_to_test, shapiro_threshold=0.05, classvar='predclass', verbose=FALSE, round_digits=8) {
   check_columns_dataset(df, c(columns_to_test, classvar))
   c_to_test <- columns_to_test
   if(is.null(c_to_test) | (length(c_to_test) == 0)) {
@@ -303,7 +303,7 @@ table_continuous_values <- function(df, columns_to_test, shapiro_threshold=0.05,
 
 #####################
 # table comorbidities
-table_n_comorb <- function(df, comorbidities, subgroup_cases=c(1), cname='comorbidities', cvalue="1", shapiro_threshold=0.05, classvar='predclass', verbose=FALSE, round_digits=2) {
+table_n_comorb <- function(df, comorbidities, subgroup_cases=c(1), cname='comorbidities', cvalue="1", shapiro_threshold=0.05, classvar='predclass', verbose=FALSE, round_digits=8) {
   check_columns_dataset(df, c(comorbidities, classvar))
   for(c in comorbidities) {
     if(length(intersect(c(cvalue), levels(df[[c]]))) == 0) {
