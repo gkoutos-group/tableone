@@ -78,7 +78,7 @@ table_cat_pval <- function(df, columns_to_test, classvar='predclass', verbose=FA
 
 #####################
 # table with the distribution of values N of cases and % for categorical variables
-table_cat_values <- function(df, columns_to_test, positive_class="1", classvar='predclass', verbose=FALSE, round_digits=8) {
+table_cat_values <- function(df, columns_to_test, positive_class="1", classvar='predclass', verbose=FALSE, round_digits=8, round_digits_percent=0) {
   check_columns_dataset(df, c(columns_to_test, classvar))
   
   # prepare a df with these columns
@@ -116,7 +116,7 @@ table_cat_values <- function(df, columns_to_test, positive_class="1", classvar='
         n_patients <- append(n_patients, n)
         # calculate the percentage of patients in both the cluster and with the condition
         percent_patients <- append(percent_patients, 
-                                   round(100 * nrow(df[(df[[classvar]] == c) & (df[[i]] == v) & (!is.na(df[[i]])), ])/nrow(df[df[[classvar]] == c, ]), digits=round_digits))
+                                   round(100 * nrow(df[(df[[classvar]] == c) & (df[[i]] == v) & (!is.na(df[[i]])), ])/nrow(df[df[[classvar]] == c, ]), digits=round_digits_percent))
       }
     }
   }
@@ -303,7 +303,7 @@ table_continuous_values <- function(df, columns_to_test, shapiro_threshold=0.05,
 
 #####################
 # table comorbidities
-table_n_comorb <- function(df, comorbidities, subgroup_cases=c(1), cname='comorbidities', cvalue="1", shapiro_threshold=0.05, classvar='predclass', verbose=FALSE, round_digits=8) {
+table_n_comorb <- function(df, comorbidities, subgroup_cases=c(1), cname='comorbidities', cvalue="1", shapiro_threshold=0.05, classvar='predclass', verbose=FALSE, round_digits=8, round_digits_percent=0) {
   check_columns_dataset(df, c(comorbidities, classvar))
   for(c in comorbidities) {
     if(length(intersect(c(cvalue), levels(df[[c]]))) == 0) {
@@ -355,7 +355,7 @@ table_n_comorb <- function(df, comorbidities, subgroup_cases=c(1), cname='comorb
       subgroups <- append(subgroups, s)
       main <- append(main, sum(rowSums(df[df[[classvar]] == i, comorbidities] == cvalue, na.rm=T) >= s))
       secondary <- append(secondary, 
-                          round(100 * sum(rowSums(df[df[[classvar]] == i, comorbidities] == cvalue, na.rm=T) >= s) / nrow(df[df[[classvar]] == i, ]), digits=round_digits))
+                          round(100 * sum(rowSums(df[df[[classvar]] == i, comorbidities] == cvalue, na.rm=T) >= s) / nrow(df[df[[classvar]] == i, ]), digits=round_digits_percent))
     }
   }
   cat_df <- data.frame(class, condition, total_patients, subgroups, main, secondary)
