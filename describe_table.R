@@ -437,17 +437,17 @@ compile_results_to_xlsx <- function(df,
   
   if(!is.null(output_file)) {
     tryCatch({
-      write.xlsx(result_cat,
+      write.xlsx2(result_cat,
                  file = output_file,
                  sheetName = "categorical variables",
                  append = FALSE)
       
-      write.xlsx(result_cont,
+      write.xlsx2(result_cont,
                  file = output_file,
                  sheetName = "continuous variables",
                  append = TRUE)
       
-      write.xlsx(result_comorb,
+      write.xlsx2(result_comorb,
                  file = output_file,
                  sheetName = "comorbidity relation",
                  append = TRUE)
