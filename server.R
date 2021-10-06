@@ -38,10 +38,11 @@ server <- function(input, output, session) {
   })
   
   output$choose_columns_skip <- renderUI({
-    if(is.null(input$columns_categorical)) {
+    df <- load_dataset()
+    if(is.null(df)){
       return()
     }
-    ops <- input$columns_categorical
+    ops <- colnames(df)
     
     if(!is.null(input$columns_skip)) {
       pre_selected <- intersect(input$columns_skip, ops)
