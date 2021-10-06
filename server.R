@@ -24,94 +24,85 @@ server <- function(input, output, session) {
     return(tdf)
   })
   
-  # read the dtypes file
-  load_dtypes <- reactive({
-    if (is.null(input$column_description$datapath)) {
-      return(NULL)
-    } else if(grepl(".xls$|.xlsx$", input$column_description$datapath)) {
-      tdf <- read_excel(input$column_description$datapath, sheet=ifelse(input$column_description_sheet == "", 1, input$column_description_sheet))
+  output$choose_columns_categorical <- renderUI({
+    df <- load_dataset()
+    if(is.null(df)){
+      return()
+    }
+    cnames <- colnames(df)
+    
+    checkboxGroupInput("columns_categorical",
+                       "Choose categorical columns", 
+                       choices  = cnames,
+                       selected = cnames)
+  })
+  
+  output$choose_columns_skip <- renderUI({
+    if(is.null(input$columns_categorical)) {
+      return()
+    }
+    ops <- input$columns_categorical
+    
+    if(!is.null(input$columns_skip)) {
+      pre_selected <- intersect(input$columns_skip, ops)
     } else {
-      tdf <- read.csv(input$column_description$datapath)
+      pre_selected <- NULL
     }
-    return(tdf)
+    
+    checkboxGroupInput("columns_skip", 
+                       "Choose columns to skip reporting", 
+                       choices  = ops,
+                       selected = pre_selected)
   })
   
-  # from the dtypes file process other info
-  process_dtypes <- reactive({
-    df <- load_dataset()
-    dtypes <- load_dtypes()
+  output$choose_columns_countable <- renderUI({
+    if(is.null(input$columns_categorical)) {
+      return()
+    }
+    ops <- input$columns_categorical
     
-    column <- vector()
-    mode <- vector()
-    type <- vector()
-    countable <- vector()
-    
-    if(!is.null(dtypes)) {
-      column <- as.vector(dtypes$column)
-      mode <- as.vector(dtypes$mode)
-      type <- as.vector(dtypes$type)
-      countable <- as.vector(dtypes$countable)
+    if(!is.null(input$columns_skip)) {
+      ops <- setdiff(ops, input$columns_skip)
     }
     
-    if(input$guess_column_types) {
-      # check the others
-      for(c in colnames(df)) {
-        if(c %in% column) { #already specified
-          next
-        }
-        
-        m <- 'automatic'
-        t <- infer_column_type(df, c, input$ratio_factor, input$ratio_numeric)
-        
-        column <- append(column, c)
-        mode <- append(mode, m)
-        type <- append(type, t)
-        countable <- append(countable, NA)
-      }
+    if(!is.null(input$columns_countable)) {
+      pre_selected <- intersect(input$columns_countable, ops)
+    } else {
+      pre_selected <- ops
     }
     
-    dtypes_n <- as.data.frame(list(column=column, mode=mode, type=type, countable=countable))
-    return(dtypes_n)
+    checkboxGroupInput("columns_countable", 
+                       "Choose columns with countable diseases", 
+                       choices  = ops,
+                       selected = pre_selected)
   })
-  
-  
-  get_valid_columns <- function(cols) {
-    if(length(cols) == 0) {
-      return(cols)
-    }
-    df <- load_dataset()
-    return(cols[sapply(cols, function(x) {(x %in% colnames(df))})])
-  }
   
   gimme_numerical <- reactive({
-    dtypes <- process_dtypes()
-    candidates <- unique(dtypes[(tolower(dtypes$type) == 'numeric') | (tolower(dtypes$type) == 'int') | (tolower(dtypes$type) == 'float'), ]$column)
-    return(get_valid_columns(candidates))
+    if(is.null(input$columns_categorical)) {
+      return()
+    } else {
+      return(setdiff(setdiff(colnames(load_dataset()), input$columns_categorical), input$columns_skip))
+    }
   })
   
   gimme_categorical <- reactive({
-    dtypes <- process_dtypes()
-    candidates <- unique(dtypes[(tolower(dtypes$type) == 'factor') | (tolower(dtypes$type) == 'categorical') | (tolower(dtypes$type) == 'binary'), ]$column)
-    return(get_valid_columns(candidates))
+    if(is.null(input$columns_categorical)) {
+      return()
+    } else {
+      return(setdiff(input$columns_categorical, input$columns_skip))
+    }
   })
   
   gimme_count_var <- reactive({
-    dtypes <- process_dtypes()
-    if(is.null(input$count_group) | (input$count_group == "")) {
-      ops <- unique(dtypes[dtypes$type == "binary", ]$column)
-      
-      df <- load_dataset()
-      
-      positives <- tolower(unlist(strsplit(input$positive_values, ',')))
-      return(get_valid_columns(ops[sapply(ops, function(x) { (sum(tolower(as.character(df[[x]])) %in% positives) > 0)})]))
+    if(is.null(input$columns_countable)) {
+      return()
     } else {
-      return(get_valid_columns(unique(dtypes[dtypes$countable == input$count_group, ]$column)))
+      return(input$columns_countable)
     }
   })
   
   process_df <- reactive({
     df <- load_dataset()
-    dtypes <- process_dtypes()
     
     for(c in gimme_numerical()) {
       df[[c]] <- as.numeric(df[[c]])
@@ -127,7 +118,6 @@ server <- function(input, output, session) {
     }
     
     df$.all_samples <- 1
-    
     return(df)
   })
   
@@ -142,13 +132,6 @@ server <- function(input, output, session) {
       }
     }
   }
-  
-  output$column_descrition_red <- renderText({
-    dtypes <- load_dtypes()
-    if(is.null(dtypes) & !input$guess_column_types) {
-      "Either specify to guess the column types or insert description file"
-    }
-  })
   
   output$group_samples_red <- renderText({
     if(!(input$group_samples %in% colnames(process_df()))) {
@@ -198,11 +181,6 @@ server <- function(input, output, session) {
     return(paste(a, b))
     
   })
-  
-  output$table_column_description <- renderTable({
-    process_dtypes()
-  }, rownames = FALSE)
-  
   
   .tnumerical <- reactive({
     df <- process_df()
@@ -270,16 +248,6 @@ server <- function(input, output, session) {
     return(paste(format(Sys.time(), "%Y%m%d"), dfn, dfd, VERSION, sep="_"))
   })
   
-  output$download_table_column_description <- downloadHandler(
-    filename = function() {
-      paste0(base_download_name(), "_datatypes.csv")
-    },
-    content = function(file) {
-      write.csv(process_dtypes(), file, row.names = FALSE)
-    },
-    contentType = "text/csv"
-  )
-  
   output$download_table_numerical <- downloadHandler(
     filename = function() {
       paste0(base_download_name(), "_numerical.csv")
@@ -316,8 +284,7 @@ server <- function(input, output, session) {
   ########################################
   output$df_summary <- renderUI({
     data <- process_df()
-    dtypes <- process_dtypes()
-    summarytools::view(dfSummary(data[, setdiff(colnames(data), c('.all_samples', unique(dtypes[dtypes$type == 'skip', ]$column)))]),
+    summarytools::view(dfSummary(data[, setdiff(colnames(data), c('.all_samples'))]),
                        method='render',
                        style='rmarkdown',
                        plain.ascii=T)
@@ -329,8 +296,7 @@ server <- function(input, output, session) {
     },
     content = function(file) {
       data <- process_df()
-      dtypes <- process_dtypes()
-      view(dfSummary(data[, setdiff(colnames(data), c('.all_samples', unique(dtypes[dtypes$type == 'skip', ]$column)))]), 
+      view(dfSummary(data[, setdiff(colnames(data), c('.all_samples'))]), 
            method='viewer',
            style='rmarkdown',
            file=file)
@@ -340,8 +306,7 @@ server <- function(input, output, session) {
   ########################################
   .tunivariate <- reactive({
     if(input$univariate_variables == '') {
-      dtypes <- process_dtypes()
-      pselect <- unique(dtypes[dtypes$type != 'skip', ]$column)
+      pselect <- colnames(process_df())
       vars <- setdiff(pselect, c('.all_samples', input$univariate_output, '', NULL))
     } else {
       vars <- unlist(strsplit(input$univariate_variables, ','))
@@ -381,8 +346,6 @@ server <- function(input, output, session) {
   ########################################
   .multivariate_model <- reactive({
     if(input$multivariate_variables == '') {
-      dtypes <- process_dtypes()
-      pselect <- unique(dtypes[dtypes$type != 'skip', ]$column)
       vars <- setdiff(pselect, c('.all_samples', input$multivariate_output, '', NULL))
     } else {
       vars <- unlist(strsplit(input$multivariate_variables, ','))

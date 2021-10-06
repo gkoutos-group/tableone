@@ -28,98 +28,75 @@ ui <- fluidPage(
           textInput("dataset_sheet", label = "If XLSX file, add sheet name:", value=""),
           span(textOutput("dataset_red"),
                style = "color:red"),
-          
-          helpText("Dataset types definition"),
-          fileInput(
-            "column_description",
-            "Choose CSV/XLS(X) File",
-            multiple = FALSE,
-            accept = c("text/csv",
-                       "text/comma-separated-values,text/plain",
-                       ".csv",
-                       ".xls",
-                       ".xlsx")
-          ),
-          textInput("column_description_sheet", label = "If XLSX file, add sheet name:", value=""),
-          checkboxInput("guess_column_types", "Guess column types", value = TRUE),
-          span(textOutput("column_descrition_red"),
-               style = "color:red"),
-          
-          hr(),
-          textInput("group_samples", label = "Group samples on:", value="group"),
-          span(textOutput("group_samples_red"),
-               style = "color:red"),
-          
-          textInput("count_group", label = "Count positive column elements based:", value=""),
-          textInput("count_group_breaks", label = "Number of breaks (comma-separated `,`)", value="1,2,3"),
-          span(textOutput("count_group_red"),
-               style = "color:red"),
-          
-          textInput("positive_values", label = "What values indicate positives on binary data? (comma-separated `,`)", value="1,yes"),
-          
-          hr(),
-          helpText("Advanced options"),
-          numericInput(
-            "ratio_numeric",
-            label = "Ratio for numeric column identification",
-            value = 0.1, min = 0, max = 1,
-          ),
-          numericInput(
-            "ratio_factor",
-            label = "Ratio for categorical column identification",
-            value = 0.2, min = 0, max = 1
-          ),
-          numericInput(
-            "shapiro_threshold",
-            label = "Normality test p-val",
-            value = 0.05, min = 0, max = 1
-          ),
-          
-          hr(),
-          helpText("Number of digits in downloaded file"),
-          numericInput(
-            "digits_categorical",
-            label = "Number of digits for categorical table",
-            value = 2, min = 0, max = 6, step=1,
-          ),
-          numericInput(
-            "digits_numerical",
-            label = "Number of digits for numerical table",
-            value = 2, min = 0, max = 6, step=1,
-          ),
-          numericInput(
-            "digits_counts",
-            label = "Number of digits for counts table",
-            value = 2, min = 0, max = 6, step=1,
-          ),
-          span(textOutput("digits_red"),
-               style = "color:red"),
         ),
-        
         mainPanel(
-          helpText("Data types specification"),
-          tableOutput("table_column_description"),
-          span(textOutput("table_column_description_red"),
-               style = "color:red"),
-          downloadButton("download_table_column_description", "Download"),
-          
-          helpText("Numerical features"),
-          tableOutput("table_numerical"),
-          downloadButton("download_table_numerical", "Download"),
-          
-          helpText("Categorical features"),
-          tableOutput("table_categorical"),
-          downloadButton("download_table_categorical", "Download"),
-          
-          helpText("Counted features"),
-          tableOutput("table_countable"),
-          downloadButton("download_table_counted", "Download")
+          uiOutput("choose_columns_categorical"),
+          uiOutput("choose_columns_skip"),
+          uiOutput("choose_columns_countable"),
         )
       )
     ),
     tabPanel("Dataset summary",
              htmlOutput("df_summary"),
              downloadButton("download_summary", "Download")),
+    tabPanel("Descriptions by group",
+             sidebarLayout(
+               sidebarPanel(
+                 hr(),
+                 textInput("group_samples", label = "Group samples on:", value="group"),
+                 span(textOutput("group_samples_red"),
+                      style = "color:red"),
+                 
+                 textInput("count_group", label = "Count positive column elements based:", value=""),
+                 textInput("count_group_breaks", label = "Number of breaks (comma-separated)", value="1,2,3"),
+                 span(textOutput("count_group_red"),
+                      style = "color:red"),
+                 
+                 textInput("positive_values", label = "What values indicate positives on binary data? (comma-separated)", value="1,yes"),
+                 hr(),
+                 helpText("Number of digits in downloaded file"),
+                  numericInput(
+                    "digits_categorical",
+                    label = "Number of digits for categorical table",
+                    value = 2, min = 0, max = 6, step=1,
+                  ),
+                  numericInput(
+                    "digits_numerical",
+                    label = "Number of digits for numerical table",
+                    value = 2, min = 0, max = 6, step=1,
+                  ),
+                  numericInput(
+                    "digits_counts",
+                    label = "Number of digits for counts table",
+                    value = 2, min = 0, max = 6, step=1,
+                  ),
+                  span(textOutput("digits_red"),
+                       style = "color:red"),
+                 
+                 hr(),
+                 helpText("Advanced options"),
+                 numericInput(
+                   "shapiro_threshold",
+                   label = "Normality test p-val",
+                   value = 0.05, min = 0, max = 1
+                 ),
+                 hr(),
+               ),
+               mainPanel(
+                 helpText("Numerical features"),
+                 tableOutput("table_numerical"),
+                 downloadButton("download_table_numerical", "Download"),
+                 
+                 helpText("Categorical features"),
+                 tableOutput("table_categorical"),
+                 downloadButton("download_table_categorical", "Download"),
+                 
+                 helpText("Counted features"),
+                 tableOutput("table_countable"),
+                 downloadButton("download_table_counted", "Download")
+               )
+             )
+    ),
     tabPanel("Univariate analysis",
              sidebarLayout(
                sidebarPanel(
