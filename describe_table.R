@@ -306,7 +306,7 @@ table_continuous_values <- function(df, columns_to_test, shapiro_threshold=0.05,
 table_n_comorb <- function(df, comorbidities, subgroup_cases=c(1), cname='comorbidities', cvalue="1", shapiro_threshold=0.05, classvar='predclass', verbose=FALSE, round_digits=8, round_digits_percent=0) {
   check_columns_dataset(df, c(comorbidities, classvar))
   for(c in comorbidities) {
-    if(length(intersect(c(cvalue), levels(df[[c]]))) == 0) {
+    if(length(intersect(c(cvalue), unique(df[[c]]))) == 0) {
       stop(paste('Condition', c, 'does not have case', cvalue))
     }
   }
@@ -323,7 +323,7 @@ table_n_comorb <- function(df, comorbidities, subgroup_cases=c(1), cname='comorb
   
   cvalue <- c(cvalue)
   
-  df$comorb_per_patient <- rowSums(df[, comorbidities] %in% cvalue, na.rm=T)
+  df$comorb_per_patient <- apply(df[, comorbidity_variables], 1, function(x) {sum(x %in% cvalue, na.rm=T)})
   
   norm_t <- NULL
   if(nrow(df) >= 5000) {
@@ -355,9 +355,9 @@ table_n_comorb <- function(df, comorbidities, subgroup_cases=c(1), cname='comorb
       total_patients <- append(total_patients, nrow(df[df[[classvar]] == i, ]))
       condition <- append(condition, cname)
       subgroups <- append(subgroups, s)
-      main <- append(main, sum(rowSums(df[df[[classvar]] == i, comorbidities] %in% cvalue, na.rm=T) >= s))
+      main <- append(main, sum(df[df[[classvar]] == i, ]$comorb_per_patient >= s))
       secondary <- append(secondary, 
-                          round(100 * sum(rowSums(df[df[[classvar]] == i, comorbidities] %in% cvalue, na.rm=T) >= s) / nrow(df[df[[classvar]] == i, ]), digits=round_digits_percent))
+                          round(100 * sum(df[df[[classvar]] == i, ]$comorb_per_patient >= s) / nrow(df[df[[classvar]] == i, ]), digits=round_digits_percent))
     }
   }
   cat_df <- data.frame(class, condition, total_patients, subgroups, main, secondary)
