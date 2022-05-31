@@ -323,7 +323,7 @@ table_n_comorb <- function(df, comorbidities, subgroup_cases=c(1), cname='comorb
   
   cvalue <- c(cvalue)
   
-  df$comorb_per_patient <- apply(df[, comorbidity_variables], 1, function(x) {sum(x %in% cvalue, na.rm=T)})
+  df$comorb_per_patient <- apply(df[, comorbidities], 1, function(x) {sum(x %in% cvalue, na.rm=T)})
   
   norm_t <- NULL
   if(nrow(df) >= 5000) {
